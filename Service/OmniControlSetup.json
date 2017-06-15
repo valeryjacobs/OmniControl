@@ -1,0 +1,24 @@
+{
+    "SetupName": "Default",
+    "Version": "0.1",
+    "Actions": [
+        {
+            "Name": "Action1",
+            "Display": "Action 1",
+            "Command": "L01ON",
+            "Confirmation": "Turned on light 1."
+        },
+        {
+            "Name": "Action2",
+            "Display": "Action 2",
+            "Command": "L02ON",
+            "Confirmation": "Turned on light 2."
+        },
+        {
+            "Name": "Action3",
+            "Display": "Action 3",
+            "Command": "L03ON",
+            "Confirmation": "Turned on light 3."
+        }
+    ]
+}
