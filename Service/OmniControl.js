@@ -1,11 +1,11 @@
 var fs = require('fs');
 var mqtt = require('mqtt');
-var sleep = require('sleep');
+//var sleep = require('sleep');
 var obj;
 
 var currentActionIndex = 0;
 
-fs.readFile('OmniControlSetup.json', 'utf8', function (err, data) {
+fs.readFile(require('path').dirname(require.main.filename) + '/OmniControlSetup.json', 'utf8', function (err, data) {
   if (err) throw err;
   console.log(data);
   obj = JSON.parse(data);
@@ -13,7 +13,6 @@ fs.readFile('OmniControlSetup.json', 'utf8', function (err, data) {
   obj.Actions.forEach(function (element) {
     console.log(element.Name);
   }, this);
-
 
   var client = mqtt.connect('mqtt://test.mosquitto.org')
 
@@ -26,11 +25,6 @@ fs.readFile('OmniControlSetup.json', 'utf8', function (err, data) {
     // message is Buffer 
     console.log(message.toString())
     if (topic = 'ORClientOut') {
-
-
-
-
-
       client.publish('ORClientIn', 'done');
     }
   })
