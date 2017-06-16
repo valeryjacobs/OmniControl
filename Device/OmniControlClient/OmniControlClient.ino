@@ -9,9 +9,13 @@
 #include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
 #include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
 #include <WiFiManager.h>
+#include <ArduinoJson.h>
 
 #include <Ticker.h>
 Ticker ticker;
+
+StaticJsonBuffer<300> JSONBuffer;
+
 
 String pw;
 const char* mqtt_server = "test.mosquitto.org";
@@ -48,7 +52,7 @@ Bounce debouncerButton1 = Bounce();
 Bounce debouncerButton2 = Bounce();
 Bounce debouncerButton3 = Bounce();
 
-#include <Wire.h> 
+#include <Wire.h>
 #include "SSD1306.h"
 SSD1306  display(0x3c, 4, 5);
 
@@ -129,9 +133,9 @@ void setup_wifi() {
   pinMode(BUILTIN_LED, OUTPUT);
   // start ticker with 0.5 because we start in AP mode and try to connect
   ticker.attach(0.6, tick);
-  
+
   dLog = "Connecting...";
-  
+
   WiFiManager wifiManager;
   //wifiManager.resetSettings();
   wifiManager.setAPCallback(configModeCallback);
@@ -147,7 +151,7 @@ void setup_wifi() {
   ticker.detach();
   //keep LED on
   digitalWrite(BUILTIN_LED, LOW);
-  
+
 
   dWifiStrength = WiFi.RSSI();
   dIP = IpAddress2String(WiFi.localIP());
@@ -189,10 +193,10 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 void loop() {
 
   if (!mqttClient.connected()) {
-    Serial.println("Disconnect detected...");
+    Serial.println("Disconnect from MQTT broker detected...");
     reconnect();
   }
-  
+
   mqttClient.loop();
   extButton();
 
@@ -231,42 +235,40 @@ void ShowScreen1()
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
+  Serial.println("Message arrived. Length" + length );
   dLog = "Message arrived";
 
-  Serial.print(topic);
-  Serial.print("] ");
+  Serial.print("Topic: ");
+  Serial.println(topic);
+  Serial.print("Payload: ");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
   }
 
+  Serial.println("");
+
   Serial.println(String((char *)payload));
+// char JSONMessageInput[length] = String((char *)payload);
+  Serial.println("|");
+   char JSONMessage[] ="{\"MessageText\":\"Hallo\", \"MessageInt\": 10}";
+//{"MessageText":"Hello","MessageInt",3}
+  JsonObject&  parsed  = JSONBuffer.parseObject(JSONMessage);
+  
+  const char * messageText = parsed["MessageText"];
+  int messageInt = parsed["MessageInt"];
+
+ Serial.println("TTTTTTTTTTTTTTTTTTTTTTTT");
+  Serial.println(messageInt);
+  Serial.println(messageText);
+  Serial.println("TTTTTTTTTTTTTTTTTTTTTTTT");
+  
+
   dIncomingMessage = String((char *)payload);
   dCurrentCommand = dIncomingMessage;
 
   Serial.println();
 
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '0') {
-    //digitalWrite(relay_pin, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    Serial.println("relay_pin -> LOW");
-    relayState = LOW;
-    EEPROM.write(0, relayState);    // Write state to EEPROM
-    EEPROM.commit();
-  } else if ((char)payload[0] == '1') {
-   // digitalWrite(relay_pin, HIGH);  // Turn the LED off by making the voltage HIGH
-    Serial.println("relay_pin -> HIGH");
-    relayState = HIGH;
-    EEPROM.write(0, relayState);    // Write state to EEPROM
-    EEPROM.commit();
-  } else if ((char)payload[0] == '2') {
-    relayState = !relayState;
-    //digitalWrite(relay_pin, relayState);  // Turn the LED off by making the voltage HIGH
-    Serial.print("relay_pin -> switched to ");
-    Serial.println(relayState);
-    EEPROM.write(0, relayState);    // Write state to EEPROM
-    EEPROM.commit();
-  }
+  
 }
 
 void reconnect() {
@@ -286,10 +288,10 @@ void reconnect() {
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
-     // for (int i = 0; i < 5000; i++) {
+      // for (int i = 0; i < 5000; i++) {
       //  extButton();
       //  delay(1);
-     // }
+      // }
     }
   }
 }
@@ -308,11 +310,11 @@ void extButton() {
     Serial.println("debouncerButton1 fell");
     // Toggle relay state :
     relayState = !relayState;
-   // digitalWrite(relay_pin, relayState);
+    // digitalWrite(relay_pin, relayState);
     EEPROM.write(0, relayState);    // Write state to EEPROM
     ShowScreen1();
     mqttClient.publish(outTopic, "1");
-    
+
   }
 
   if ( debouncerButton2.fell() ) {
